@@ -236,7 +236,7 @@ GameObject:
   - component: {fileID: 1667793163178415796}
   m_Layer: 5
   m_Name: CombatText
-  m_TagString: Untagged
+  m_TagString: CombatText
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -321,6 +321,7 @@ MonoBehaviour:
   image: {fileID: 6183030939840713891}
   xUIOffset: 25
   yUnitOffset: 2.2
+  distanceToMove: 200
   fadeTime: 3
   defaultFontSize: 30
   randomXLimit: 100

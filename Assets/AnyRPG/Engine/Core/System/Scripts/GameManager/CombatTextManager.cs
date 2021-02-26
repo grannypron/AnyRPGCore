@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using CustomTools.ObjectPooling.Scripts.ObjectPool;
 
 namespace AnyRPG {
     public class CombatTextManager : MonoBehaviour {
@@ -40,11 +41,6 @@ namespace AnyRPG {
             SystemEventManager.StartListening("OnLevelUnload", HandleLevelUnload);
         }
 
-        public void Start() {
-            //List<GameObject> foundObjects = combatTextCanvas.transform.fi
-            PopulateObjectPool();
-        }
-
         public void HandleAfterCameraUpdate(string eventName, EventParamProperties eventParamProperties) {
             UpdateCombatText();
         }
@@ -77,29 +73,13 @@ namespace AnyRPG {
             }
         }
 
-        public void PopulateObjectPool() {
-            foreach (Transform child in combatTextCanvas.transform) {
-                CombatTextController combatTextController = child.GetComponent<CombatTextController>();
-                if (combatTextController != null) {
-                    combatTextControllers.Add(combatTextController);
-                }
-            }
-        }
-
         public CombatTextController GetCombatTextController() {
-            CombatTextController returnValue = null;
-            if (combatTextControllers.Count > 0) {
-                returnValue = combatTextControllers[0];
-                inUseCombatTextControllers.Add(combatTextControllers[0]);
-                combatTextControllers.RemoveAt(0);
-            } else {
-                if (inUseCombatTextControllers.Count > 0) {
-                    returnValue = inUseCombatTextControllers[0];
-                    inUseCombatTextControllers.RemoveAt(0);
-                    inUseCombatTextControllers.Add(returnValue);
-                }
-            }
-            return returnValue;
+            CombatTextController controller = (CombatTextController)ObjectPooler.Instance.GetComponent<ObjectPooler>().SpawnFromPool(PooledObjectType.CombatText, new Vector3(0,0,0), new Quaternion(0,0,0,0)).GetComponent<CombatTextController>();
+            // The pooled object is not a child of the canvas right now since we are instantiating it, so assign it
+            controller.transform.SetParent(combatTextCanvas.gameObject.transform, true);// I have tried this with true, false, and just assigning controller.transform.parent = 
+            // TODO: no logic here yet to use the ones that are in use if the pool runs out - make that an option in the pooler
+            inUseCombatTextControllers.Add(controller);
+            return controller;
         }
 
         public void returnControllerToPool(CombatTextController combatTextController) {
@@ -112,7 +92,7 @@ namespace AnyRPG {
                 inUseCombatTextControllers.Remove(combatTextController);
                 combatTextControllers.Add(combatTextController);
             }
-            combatTextController.gameObject.SetActive(false);
+            ObjectPooler.Instance.GetComponent<ObjectPooler>().Despawn(combatTextController.gameObject);
         }
 
         public void SpawnCombatText(Interactable target, int damage, CombatTextType combatType, CombatMagnitude combatMagnitude, AbilityEffectContext abilityEffectContext) {
